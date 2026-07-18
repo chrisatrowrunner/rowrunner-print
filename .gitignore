@@ -1,0 +1,17 @@
+# secrets & local config
+.env
+
+# rendered labels / dry-run output
+out/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.Python
+
+# os / editor
+.DS_Store
