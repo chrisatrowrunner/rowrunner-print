@@ -44,6 +44,7 @@ PRINTER_IDENTIFIER = os.environ.get("PRINTER_IDENTIFIER", "tcp://192.168.1.50:91
 # ── Label ───────────────────────────────────────────────────────────────────
 LABEL_SIZE = os.environ.get("LABEL_SIZE", "62")   # "62" continuous or "29x90" die-cut
 LABEL_RED = _bool("LABEL_RED", True)               # print ⚠ note in red (needs black/red roll)
+LABEL_LOGO = _bool("LABEL_LOGO", True)             # show the RowRunner logo at the top
 
 # Optional font overrides (absolute paths to .ttf/.ttc). Blank = auto-detect.
 FONT_BOLD = os.environ.get("FONT_BOLD", "").strip()

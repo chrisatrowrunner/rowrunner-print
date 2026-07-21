@@ -106,6 +106,7 @@ def handle_order(order):
     img = render_label(
         order,
         label_size=config.LABEL_SIZE,
+        show_logo=config.LABEL_LOGO,
         red_enabled=config.LABEL_RED,
         font_bold_path=config.FONT_BOLD,
         font_regular_path=config.FONT_REGULAR,
@@ -197,6 +198,7 @@ _DEMO_ORDER = {
 
 def render_demo():
     img = render_label(_DEMO_ORDER, label_size=config.LABEL_SIZE,
+                       show_logo=config.LABEL_LOGO,
                        red_enabled=config.LABEL_RED,
                        font_bold_path=config.FONT_BOLD,
                        font_regular_path=config.FONT_REGULAR)
@@ -221,6 +223,7 @@ def render_selftest():
         return
     order = rows[0]
     img = render_label(order, label_size=config.LABEL_SIZE,
+                       show_logo=config.LABEL_LOGO,
                        red_enabled=config.LABEL_RED,
                        font_bold_path=config.FONT_BOLD,
                        font_regular_path=config.FONT_REGULAR)
@@ -236,6 +239,7 @@ def test_print():
     wire up the database side. Ignores DRY_RUN (its whole purpose is to hit the printer).
     """
     img = render_label(_DEMO_ORDER, label_size=config.LABEL_SIZE,
+                       show_logo=config.LABEL_LOGO,
                        red_enabled=config.LABEL_RED,
                        font_bold_path=config.FONT_BOLD,
                        font_regular_path=config.FONT_REGULAR)
