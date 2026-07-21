@@ -16,10 +16,11 @@ Exactly-once, even across restarts or two workers running at once:
 Auth: PUBLIC anon key only. Reads are public; both RPCs are security-definer.
 
 Usage:
-  python worker.py            # run the poll loop forever
-  python worker.py --once     # one poll cycle, then exit
-  python worker.py --selftest # render the newest READY real order to out/ (no claim, no print)
-  python worker.py --demo     # render a synthetic fully-populated label (shows the red note)
+  python worker.py             # run the poll loop forever
+  python worker.py --once      # one poll cycle, then exit
+  python worker.py --test-print# send the demo label to the real printer (no DB) — hardware smoke test
+  python worker.py --selftest  # render the newest READY real order to out/ (no claim, no print)
+  python worker.py --demo      # render a synthetic fully-populated label (shows the red note)
 """
 import sys
 import time
@@ -228,6 +229,33 @@ def render_selftest():
         "printed]".format(order.get("order_no"), path, img.width, img.height))
 
 
+def test_print():
+    """Render the demo label and send it to the CONFIGURED printer — no DB, no claim.
+
+    A hardware smoke test: proves the printer, roll, and connection work before you
+    wire up the database side. Ignores DRY_RUN (its whole purpose is to hit the printer).
+    """
+    img = render_label(_DEMO_ORDER, label_size=config.LABEL_SIZE,
+                       red_enabled=config.LABEL_RED,
+                       font_bold_path=config.FONT_BOLD,
+                       font_regular_path=config.FONT_REGULAR)
+    save_png(img, config.OUT_DIR, "TEST-PRINT")  # also keep a copy to compare against
+    log("test-print: sending demo label to {} via {} ({})...".format(
+        config.PRINTER_MODEL, config.PRINTER_BACKEND, config.PRINTER_IDENTIFIER))
+    try:
+        print_label(img, model=config.PRINTER_MODEL, backend=config.PRINTER_BACKEND,
+                    identifier=config.PRINTER_IDENTIFIER, label_size=config.LABEL_SIZE,
+                    red=config.LABEL_RED)
+        log("test-print: OK — a label should have come out. If it did, the hardware "
+            "is good; set DRY_RUN=0 and run the loop.")
+    except PrintError as e:
+        log("!! test-print FAILED: {}".format(e))
+        log("!! checklist: printer powered on? label roll loaded? "
+            "PRINTER_BACKEND/PRINTER_IDENTIFIER correct in .env? "
+            "(network: PC + printer on same Wi-Fi, port 9100; USB: run `brother_ql discover`)")
+        sys.exit(1)
+
+
 def _stop(*_a):
     global _running
     _running = False
@@ -240,6 +268,8 @@ def main():
     args = set(sys.argv[1:])
     if "--demo" in args:
         render_demo()
+    elif "--test-print" in args:
+        test_print()
     elif "--selftest" in args:
         render_selftest()
     elif "--once" in args:

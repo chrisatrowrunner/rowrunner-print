@@ -88,10 +88,11 @@ the printer is wired.
 ## Running it
 
 ```bash
-.venv/bin/python worker.py            # run the poll loop forever
-.venv/bin/python worker.py --once     # one poll cycle, then exit
-.venv/bin/python worker.py --selftest # render the newest READY real order to out/ (no claim, no print)
-.venv/bin/python worker.py --demo     # render a synthetic fully-populated label (shows the red note)
+.venv/bin/python worker.py              # run the poll loop forever
+.venv/bin/python worker.py --once       # one poll cycle, then exit
+.venv/bin/python worker.py --test-print # send the demo label to the real printer (no DB) — hardware smoke test
+.venv/bin/python worker.py --selftest   # render the newest READY real order to out/ (no claim, no print)
+.venv/bin/python worker.py --demo       # render a synthetic fully-populated label (shows the red note)
 ```
 
 `--demo` and `--selftest` are great for eyeballing the label design on the Mac with no
@@ -142,11 +143,15 @@ Brother's USB vendor id is `0x04f9`; the product id isn't hardcoded in brother_q
 
 ### Go-live checklist
 
-1. Run the SQL (step 1) if you haven't.
-2. Load a black/red 62mm roll.
-3. Set `PRINTER_IDENTIFIER` to the printer's IP and `DRY_RUN=0` in `.env`.
-4. `python worker.py --once`, tap **Mark ready** on a test order in the KDS, watch it print.
-5. Switch to the always-on loop (below).
+1. Load a black/red 62mm roll.
+2. `pip install -r requirements.txt` (installs `brother_ql`).
+3. Set `PRINTER_BACKEND` / `PRINTER_IDENTIFIER` in `.env` for your printer.
+4. **Hardware smoke test:** `python worker.py --test-print` → a demo label prints. This
+   needs no database, so it isolates "is the printer working?" from everything else.
+5. Run the SQL (setup step 1) to create the RPCs.
+6. Set `DRY_RUN=0`, then `python worker.py --once` and tap **Mark ready** on a test order
+   in the KDS — watch it print.
+7. Switch to the always-on loop (below).
 
 ---
 
