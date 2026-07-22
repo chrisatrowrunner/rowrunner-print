@@ -30,12 +30,25 @@ import requests
 
 import config
 from label import render_label
-from printer import print_label, save_png, PrintError
+from printer import print_label, save_png, PrintError, find_printer
 
 # Columns to read. NEVER include `code` (hidden by design).
 COLS = "id,order_no,seat,stand,lines,customer_name,notes,stage,ready_at,printed_at"
 
 _running = True
+_printer_id = None  # resolved (possibly auto-discovered) tcp://ip:port, cached
+
+
+def resolve_printer(force=False):
+    """Return the printer address to use, auto-discovering it if needed.
+
+    Cached so we don't scan every print; pass force=True (or after a failure)
+    to re-discover, e.g. when the printer's DHCP address has changed.
+    """
+    global _printer_id
+    if force or _printer_id is None:
+        _printer_id = find_printer(config.PRINTER_IDENTIFIER, config.PRINTER_BACKEND, log)
+    return _printer_id
 
 
 def log(msg):
@@ -132,7 +145,7 @@ def handle_order(order):
             img,
             model=config.PRINTER_MODEL,
             backend=config.PRINTER_BACKEND,
-            identifier=config.PRINTER_IDENTIFIER,
+            identifier=resolve_printer(),
             label_size=config.LABEL_SIZE,
             red=config.LABEL_RED,
         )
@@ -144,6 +157,8 @@ def handle_order(order):
         log("!! releasing the row (mark_unprinted) so it retries next poll.")
         log("!! Check the printer: powered on? label roll loaded? reachable?")
         log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # the address may have changed — re-discover before the next attempt
+        resolve_printer(force=True)
         try:
             mark_unprinted(oid)
         except requests.RequestException as e2:
@@ -180,6 +195,8 @@ def run_loop():
         mode, config.LABEL_SIZE, config.POLL_SECONDS))
     log("watching {} — printing on: {} (stage <= {})".format(
         config.SUPABASE_URL, trigger, config.MAX_PRINT_STAGE))
+    if not config.DRY_RUN:
+        log("printer: {}".format(resolve_printer()))
 
     while _running:
         poll_once()
@@ -255,11 +272,12 @@ def test_print():
                        font_bold_path=config.FONT_BOLD,
                        font_regular_path=config.FONT_REGULAR)
     save_png(img, config.OUT_DIR, "TEST-PRINT")  # also keep a copy to compare against
+    ident = resolve_printer()
     log("test-print: sending demo label to {} via {} ({})...".format(
-        config.PRINTER_MODEL, config.PRINTER_BACKEND, config.PRINTER_IDENTIFIER))
+        config.PRINTER_MODEL, config.PRINTER_BACKEND, ident))
     try:
         print_label(img, model=config.PRINTER_MODEL, backend=config.PRINTER_BACKEND,
-                    identifier=config.PRINTER_IDENTIFIER, label_size=config.LABEL_SIZE,
+                    identifier=ident, label_size=config.LABEL_SIZE,
                     red=config.LABEL_RED)
         log("test-print: OK — a label should have come out. If it did, the hardware "
             "is good; set DRY_RUN=0 and run the loop.")

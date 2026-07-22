@@ -161,13 +161,25 @@ Brother's USB vendor id is `0x04f9`; the product id isn't hardcoded in brother_q
 
 ---
 
-## Keeping it running on the venue PC
+## Keeping it running (auto-start)
 
-**Windows (Task Scheduler):** create a task "At log on" / "At startup" that runs
-`C:\path\to\.venv\Scripts\python.exe C:\path\to\worker.py`, set to restart on failure.
+You start the worker **once** and it runs continuously, printing every order — it is
+not run per-print. To make it fully hands-off (starts on boot, restarts if it crashes):
 
-**macOS (launchd) / Linux (systemd):** a user service that runs `worker.py` with
-`Restart=always`. The worker logs to stdout with timestamps.
+- **macOS:** `bash deploy/install-macos.sh` — installs a `launchd` service. It prints
+  the commands to check logs / stop / start.
+- **Windows (venue PC):** see [deploy/install-windows.md](deploy/install-windows.md)
+  (Task Scheduler at logon + restart-on-failure).
+
+Either way the worker logs to `worker.log` in the project folder.
+
+## Finding the printer (auto-discovery)
+
+The worker doesn't depend on a fixed printer IP. It tries `PRINTER_IDENTIFIER` first,
+and if that address doesn't answer on port 9100 it **scans the local network** for the
+printer and uses whatever it finds — so a printer that gets a new DHCP address just
+heals itself. A **DHCP reservation** for the printer is still recommended for a
+permanent install, but it's no longer required to survive a reboot.
 
 ---
 
