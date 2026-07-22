@@ -55,8 +55,13 @@ DRY_RUN = _bool("DRY_RUN", True)     # 1 = render PNG to out/ only, no hardware
 POLL_SECONDS = _int("POLL_SECONDS", 4)
 OUT_DIR = os.environ.get("OUT_DIR", "out")
 
+# When to print a label:
+#   "placed" → the instant the customer places the order (default)
+#   "ready"  → when the kitchen taps "Mark ready" in the KDS (ready_at fires)
+PRINT_TRIGGER = os.environ.get("PRINT_TRIGGER", "placed").strip().lower()
+
 # Trigger guard: a delivered order (stage 4) never needs a kitchen label, so we
-# never print for it even if it somehow has ready_at set and printed_at null.
+# never print for it even if it still has printed_at null.
 # Stage: 0 received · 1 preparing · 2 picked up · 3 on the way · 4 delivered.
 MAX_PRINT_STAGE = _int("MAX_PRINT_STAGE", 3)  # print only when stage <= this
 

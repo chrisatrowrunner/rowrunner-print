@@ -31,9 +31,15 @@ It **never** prints the `code` column — that is hidden by design; the runner g
 
 ## Exactly-once (the important part)
 
-Every `POLL_SECONDS`, the worker queries orders where `ready_at is not null AND
-printed_at is null AND stage <= 3` (a delivered order never needs a kitchen label),
-oldest ready first. For each row it:
+Every `POLL_SECONDS`, the worker queries unprinted orders (`printed_at is null AND
+stage <= 3` — a delivered order never needs a kitchen label). **When** an order becomes
+printable depends on `PRINT_TRIGGER`:
+
+- `placed` (default) — prints the instant the customer places the order, like a kitchen
+  order ticket.
+- `ready` — waits until the kitchen taps **Mark ready** in the KDS (`ready_at` fires).
+
+For each row it:
 
 1. **Atomically claims** the row via the `mark_printed(id)` RPC, which sets
    `printed_at = now()` only if it is still null and returns `true` **iff this call won

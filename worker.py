@@ -51,15 +51,24 @@ def _headers():
     }
 
 
-def fetch_ready_orders():
-    """Return rows ready to print, oldest ready first."""
+def fetch_printable_orders():
+    """Return unprinted orders to print, oldest first.
+
+    Trigger depends on config.PRINT_TRIGGER:
+      "placed" → any unprinted order (prints the moment it's placed)
+      "ready"  → only orders the KDS has marked ready (ready_at is set)
+    Delivered orders (stage 4) are always skipped.
+    """
     params = {
         "select": COLS,
-        "ready_at": "not.is.null",
         "printed_at": "is.null",
         "stage": "lte.{}".format(config.MAX_PRINT_STAGE),
-        "order": "ready_at.asc",
     }
+    if config.PRINT_TRIGGER == "ready":
+        params["ready_at"] = "not.is.null"
+        params["order"] = "ready_at.asc"
+    else:  # "placed" (default)
+        params["order"] = "placed_at.asc"
     r = requests.get(
         config.SUPABASE_URL + "/rest/v1/orders",
         headers=_headers(), params=params, timeout=15,
@@ -144,7 +153,7 @@ def handle_order(order):
 
 def poll_once():
     try:
-        orders = fetch_ready_orders()
+        orders = fetch_printable_orders()
     except requests.RequestException as e:
         # Free-tier Supabase auto-pauses after ~7 idle days → DNS/network error here.
         log("! read failed (network/DNS?). If the project is paused, resume it in "
@@ -165,10 +174,12 @@ def run_loop():
 
     mode = "DRY_RUN (PNG only)" if config.DRY_RUN else "LIVE ({} via {})".format(
         config.PRINTER_MODEL, config.PRINTER_BACKEND)
+    trigger = "ready (KDS Mark ready)" if config.PRINT_TRIGGER == "ready" \
+        else "placed (as soon as the order is placed)"
     log("RowRunner print worker starting — {}, label={}, poll={}s".format(
         mode, config.LABEL_SIZE, config.POLL_SECONDS))
-    log("watching {} for ready, unprinted orders (stage <= {})".format(
-        config.SUPABASE_URL, config.MAX_PRINT_STAGE))
+    log("watching {} — printing on: {} (stage <= {})".format(
+        config.SUPABASE_URL, trigger, config.MAX_PRINT_STAGE))
 
     while _running:
         poll_once()
