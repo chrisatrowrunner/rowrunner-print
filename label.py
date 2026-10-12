@@ -102,7 +102,17 @@ def _fmt_line(line):
 
 
 def _seat_str(seat):
+    """Mirror of the apps' src/lib/seat.ts `text` — keep in sync.
+
+    Zone venues (unnumbered seating, e.g. the URI Soccer Complex) carry a
+    `label` ("Section A2" / "Zone B") and `detail` ("South bleachers");
+    numbered venues fall back to section/row/seat.
+    """
     seat = seat or {}
+    label = (seat.get("label") or "").strip()
+    if label:
+        detail = (seat.get("detail") or "").strip()
+        return "{} · {}".format(label, detail) if detail else label
     return "Sec {} · Row {} · Seat {}".format(
         seat.get("section", "?"), seat.get("row", "?"), seat.get("seat", "?"))
 

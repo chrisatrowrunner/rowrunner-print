@@ -211,14 +211,16 @@ def run_loop():
 # ── demo / selftest (no claim, no print — just render a PNG to eyeball) ──────
 _DEMO_ORDER = {
     "order_no": 4845,
-    "seat": {"section": "204", "row": "J", "seat": "17"},
-    "stand": {"name": "Liberty Bites", "loc": "Concourse C · Sec 232"},
+    # zone seat (URI Soccer Complex) — see label._seat_str
+    "seat": {"section": "A2", "row": "", "seat": "", "zone": "A2",
+             "label": "Section A2", "detail": "South bleachers"},
+    "stand": {"name": "Pam's Grill", "loc": "Food truck · East gate, Tootell Rd"},
     "customer_name": "Chris D.",
     "lines": [
-        {"qty": 2, "name": "Classic Hot Dog", "option": "Everything",
-         "addons": ["Extra onions", "Side of chili"]},
-        {"qty": 1, "name": "Kettle Popcorn", "option": "Large", "addons": []},
-        {"qty": 1, "name": "Craft Lemonade", "option": "No ice", "addons": []},
+        {"qty": 2, "name": "All-Beef Hot Dog", "option": "Chili Dog",
+         "addons": ["Grilled Onions"]},
+        {"qty": 1, "name": "Classic Cheeseburger", "option": "Double", "addons": ["Bacon"]},
+        {"qty": 1, "name": "French Fries", "option": "Large", "addons": ["Cheese Sauce"]},
     ],
     "notes": "Severe peanut allergy — keep away from nuts!",
 }
