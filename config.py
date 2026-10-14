@@ -65,6 +65,11 @@ PRINT_TRIGGER = os.environ.get("PRINT_TRIGGER", "placed").strip().lower()
 # Stage: 0 received · 1 preparing · 2 picked up · 3 on the way · 4 delivered.
 MAX_PRINT_STAGE = _int("MAX_PRINT_STAGE", 3)  # print only when stage <= this
 
+# Only print this venue's orders. The `orders` table is shared across events, so
+# without this a leftover order from a past event (e.g. NYC Tech Week) could
+# print here. Must match the apps' VITE_VENUE_ID. Set VENUE_ID="" for all venues.
+VENUE_ID = os.environ.get("VENUE_ID", "uri-mens-soccer").strip()
+
 
 def missing():
     """Return a list of required settings that are unset, for a clear startup error."""

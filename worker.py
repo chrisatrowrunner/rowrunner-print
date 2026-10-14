@@ -77,6 +77,8 @@ def fetch_printable_orders():
         "printed_at": "is.null",
         "stage": "lte.{}".format(config.MAX_PRINT_STAGE),
     }
+    if config.VENUE_ID:
+        params["venue_id"] = "eq." + config.VENUE_ID
     if config.PRINT_TRIGGER == "ready":
         params["ready_at"] = "not.is.null"
         params["order"] = "ready_at.asc"
@@ -193,8 +195,9 @@ def run_loop():
         else "placed (as soon as the order is placed)"
     log("RowRunner print worker starting — {}, label={}, poll={}s".format(
         mode, config.LABEL_SIZE, config.POLL_SECONDS))
-    log("watching {} — printing on: {} (stage <= {})".format(
-        config.SUPABASE_URL, trigger, config.MAX_PRINT_STAGE))
+    log("watching {} — printing on: {} (stage <= {}) · venue: {}".format(
+        config.SUPABASE_URL, trigger, config.MAX_PRINT_STAGE,
+        config.VENUE_ID or "ALL venues"))
     if not config.DRY_RUN:
         log("printer: {}".format(resolve_printer()))
 
@@ -243,6 +246,8 @@ def render_selftest():
         sys.exit(1)
     params = {"select": COLS, "ready_at": "not.is.null",
               "order": "ready_at.desc", "limit": "1"}
+    if config.VENUE_ID:
+        params["venue_id"] = "eq." + config.VENUE_ID
     r = requests.get(config.SUPABASE_URL + "/rest/v1/orders",
                      headers=_headers(), params=params, timeout=15)
     r.raise_for_status()
